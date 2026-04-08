@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Attendance Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="text-align:center; font-family:Arial;">
+
+<h2>📷 Scan Student QR Code</h2>
+<p id="status">Waiting for scan...</p>
+
+<div id="reader" style="width:300px; margin:auto;"></div>
+
+<script>
+const scriptURL = "PUT_YOUR_GOOGLE_SCRIPT_URL_HERE"; // 🔥 replace this
+const eventName = "GCT_EVENT"; // you can change event name
+
+let scanning = true;
+
+function onScanSuccess(decodedText) {
+  if (!scanning) return;
+  scanning = false;
+
+  document.getElementById("status").innerText = "Processing...";
+
+  fetch(`${scriptURL}?id=${decodedText}&event=${eventName}`)
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById("status").innerText = "✅ Recorded: " + decodedText;
+
+      // Sound feedback
+      let beep = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+      beep.play();
+
+      setTimeout(() => {
+        scanning = true;
+        document.getElementById("status").innerText = "Waiting for scan...";
+      }, 2000);
+    })
+    .catch(error => {
+      document.getElementById("status").innerText = "❌ Error sending data";
+
+      setTimeout(() => {
+        scanning = true;
+        document.getElementById("status").innerText = "Waiting for scan...";
+      }, 2000);
+    });
+}
+
+let html5QrcodeScanner = new Html5QrcodeScanner(
+  "reader",
+  { fps: 10, qrbox: 250 }
+);
+
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+
+</body>
+</html>
